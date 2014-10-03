@@ -189,6 +189,11 @@ var resultFromRun = function(run) {
   return 'unknown';
 };
 
+/** Create a treeherder friendly guid from taskId+run */
+var createJobGuid = function(taskId, runId) {
+  return slugid.decode(taskId) + '-' + runId;
+};
+
 /** Handle notifications of defined task */
 Handlers.prototype.defined = function(message, task, target) {
   var that    = this;
@@ -197,7 +202,7 @@ Handlers.prototype.defined = function(message, task, target) {
     project:            target.project.project,
     revision_hash:      target.revisionHash,
     job: {
-      job_guid:         slugid.decode(status.taskId) + '/' + 0,
+      job_guid:         createJobGuid(status.taskId, 0),
       build_platform: {
           platform:     status.workerType,
           os_name:      '-',
@@ -238,7 +243,7 @@ Handlers.prototype.pending = function(message, task, target) {
       project:            target.project.project,
       revision_hash:      target.revisionHash,
       job: {
-        job_guid:         slugid.decode(status.taskId) + '/' + run.runId,
+        job_guid:         createJobGuid(status.taskId, run.runId),
         build_platform: {
             platform:     status.workerType,
             os_name:      '-',
@@ -299,7 +304,7 @@ Handlers.prototype.running = function(message, task, target) {
       project:            target.project.project,
       revision_hash:      target.revisionHash,
       job: {
-        job_guid:         slugid.decode(status.taskId) + '/' + run.runId,
+        job_guid:         createJobGuid(status.taskId, run.runId),
         build_platform: {
             platform:     status.workerType,
             os_name:      '-',
@@ -372,7 +377,7 @@ Handlers.prototype.completed = function(message, task, target) {
       project:            target.project.project,
       revision_hash:      target.revisionHash,
       job: {
-        job_guid:         slugid.decode(status.taskId) + '/' + run.runId,
+        job_guid:         createJobGuid(status.taskId, run.runId),
         build_platform: {
             platform:     status.workerType,
             os_name:      '-',
@@ -414,7 +419,7 @@ Handlers.prototype.failed = function(message, task, target) {
       project:            target.project.project,
       revision_hash:      target.revisionHash,
       job: {
-        job_guid:         slugid.decode(status.taskId) + '/' + run.runId,
+        job_guid:         createJobGuid(status.taskId, run.runId),
         build_platform: {
             platform:     status.workerType,
             os_name:      '-',
