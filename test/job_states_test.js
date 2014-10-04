@@ -90,6 +90,28 @@ suite('end to end submission', function() {
       });
   }
 
+  function getArtifacts(jobId) {
+    var url = urljoin(
+      subject.treeherderBaseUrl, 'project/' + TH_PROJECT + '/artifact/'
+    );
+
+    return request
+      .get(url)
+      .query({
+        job_id: jobId
+      })
+      .end()
+      .then(function(res) {
+        if (res.error) throw res.error;
+        // Map the result into key value pairs where the "key" is the title.
+        return res.body.reduce(function(result, value) {
+          var details = value.blob.job_details[0];
+          result[details.title] = value;
+          return result;
+        }, {});
+      });
+  }
+
   function* waitForJobState(revisionHash, state) {
     var maxRetries = 100;
 
@@ -163,6 +185,9 @@ suite('end to end submission', function() {
     // Success.
     var job = yield waitForJobState(revisionHash, 'completed');
     assert.equal(job.result, 'success');
+    assert.ok(
+      (yield getArtifacts(job.id))['Inspect Task'], 'task inspector link'
+    );
   }));
 
   test('state changes to completed+failed', co(function* () {
@@ -195,5 +220,8 @@ suite('end to end submission', function() {
     // Failure states.
     var job = yield waitForJobState(revisionHash, 'completed');
     assert.equal(job.result, 'testfailed');
+    assert.ok(
+      (yield getArtifacts(job.id))['Inspect Task'], 'task inspector link'
+    );
   }));
 });
