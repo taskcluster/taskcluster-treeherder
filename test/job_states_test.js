@@ -112,12 +112,12 @@ suite('end to end submission', function() {
       });
   }
 
+  function sleep(time, cb) {
+    return setTimeout(cb, time);
+  }
+
   function* waitForJobState(revisionHash, state) {
     var maxRetries = 100;
-
-    function sleep(time, cb) {
-      return setTimeout(cb, time);
-    }
 
     var retry = 0;
     while (retry++ < maxRetries) {
@@ -179,15 +179,32 @@ suite('end to end submission', function() {
     // Ensure the task is now running...
     yield waitForJobState(revisionHash, 'running');
 
+    var expiration = new Date();
+    expiration.setMinutes(expiration.getMinutes() + 20);
+    yield [
+      subject.queue.createArtifact(taskId, 0, 'public/foo', {
+        storageType: 'reference',
+        expires: expiration,
+        contentType: 'text/html',
+        url: 'https://mozilla.com'
+      }),
+      subject.queue.createArtifact(taskId, 0, 'public/bar', {
+        storageType: 'reference',
+        expires: expiration,
+        contentType: 'text/html',
+        url: 'https://mozilla.com'
+      }),
+    ];
+
     // Mark the task as completed with success
     yield subject.queue.reportCompleted(taskId, 0, { success: true });
 
     // Success.
     var job = yield waitForJobState(revisionHash, 'completed');
     assert.equal(job.result, 'success');
-    assert.ok(
-      (yield getArtifacts(job.id))['Inspect Task'], 'task inspector link'
-    );
+
+    var artifacts = yield getArtifacts(job.id);
+    console.log(JSON.stringify(artifacts, null, 2));
   }));
 
   test('state changes to completed+failed', co(function* () {
@@ -220,8 +237,6 @@ suite('end to end submission', function() {
     // Failure states.
     var job = yield waitForJobState(revisionHash, 'completed');
     assert.equal(job.result, 'testfailed');
-    assert.ok(
-      (yield getArtifacts(job.id))['Inspect Task'], 'task inspector link'
-    );
   }));
+
 });
