@@ -189,6 +189,42 @@ var resultFromRun = function(run) {
   return 'unknown';
 };
 
+/** Create a treeherder friendly guid from taskId+run */
+var createJobGuid = function(taskId, runId) {
+  return slugid.decode(taskId) + '-' + runId;
+};
+
+/** Create artifact list */
+var createArtifactList = function(queue, taskId, runId) {
+  // list the artifacts and build the final structure for treeherder.
+  return queue.listArtifacts(taskId, runId).then(function(list) {
+    list = list.artifacts.map(function(item) {
+      var url = queue.buildUrl(
+        queue.getArtifact,
+        taskId,
+        runId,
+        item.name
+      );
+
+      return {
+        url:          url,
+        value:        item.name,
+        content_type: 'link',
+        title:        item.name
+      };
+    });
+
+    return {
+      type: 'json',
+      name: 'Job Info',
+      job_guid: createJobGuid(taskId, runId),
+      blob: JSON.stringify({
+        job_details: list
+      })
+    };
+  });
+};
+
 /** Handle notifications of defined task */
 Handlers.prototype.defined = function(message, task, target) {
   var that    = this;
@@ -197,7 +233,7 @@ Handlers.prototype.defined = function(message, task, target) {
     project:            target.project.project,
     revision_hash:      target.revisionHash,
     job: {
-      job_guid:         slugid.decode(status.taskId) + '/' + 0,
+      job_guid:         createJobGuid(status.taskId, 0),
       build_platform: {
           platform:     status.workerType,
           os_name:      '-',
@@ -238,7 +274,7 @@ Handlers.prototype.pending = function(message, task, target) {
       project:            target.project.project,
       revision_hash:      target.revisionHash,
       job: {
-        job_guid:         slugid.decode(status.taskId) + '/' + run.runId,
+        job_guid:         createJobGuid(status.taskId, run.runId),
         build_platform: {
             platform:     status.workerType,
             os_name:      '-',
@@ -275,7 +311,7 @@ Handlers.prototype.pending = function(message, task, target) {
                           status.taskId + "/" + run.runId;
       result.job.artifacts = [{
         type:     'json',
-        name:     "Job Info",
+        name:     'Job Info',
         blob: {
           job_details: [{
             url:            inspectorLink,
@@ -299,7 +335,7 @@ Handlers.prototype.running = function(message, task, target) {
       project:            target.project.project,
       revision_hash:      target.revisionHash,
       job: {
-        job_guid:         slugid.decode(status.taskId) + '/' + run.runId,
+        job_guid:         createJobGuid(status.taskId, run.runId),
         build_platform: {
             platform:     status.workerType,
             os_name:      '-',
@@ -348,7 +384,7 @@ Handlers.prototype.running = function(message, task, target) {
                           status.taskId + "/" + run.runId;
       result.job.artifacts = [{
         type:     'json',
-        name:     "Job Info",
+        name:     'Job Info',
         blob: {
           job_details: [{
             url:            inspectorLink,
@@ -367,42 +403,58 @@ Handlers.prototype.running = function(message, task, target) {
 Handlers.prototype.completed = function(message, task, target) {
   var that    = this;
   var status  = message.payload.status;
-  return target.project.postJobs(status.runs.map(function(run) {
-    return {
-      project:            target.project.project,
-      revision_hash:      target.revisionHash,
-      job: {
-        job_guid:         slugid.decode(status.taskId) + '/' + run.runId,
-        build_platform: {
-            platform:     status.workerType,
-            os_name:      '-',
-            architecture: '-'
-        },
-        machine_platform: {
-            platform:     status.workerType,
-            os_name:      '-',
-            architecture: '-'
-        },
-        name:             task.metadata.name,
-        reason:           'scheduled',  // use reasonCreated or reasonResolved
-        job_symbol:       task.extra.treeherder.symbol,
-        group_name:       task.extra.treeherder.groupName,
-        group_symbol:     task.extra.treeherder.groupSymbol,
-        product_name:     task.extra.treeherder.productName,
-        submit_timestamp: timestamp(run.scheduled),
-        start_timestamp:  (run.started ? timestamp(run.started) : undefined),
-        end_timestamp:    (run.resolved ? timestamp(run.resolved) : undefined),
-        state:            stateFromRun(run),
-        result:           resultFromRun(run),
-        who:              task.metadata.owner,
-        // You _must_ pass option collection until
-        // https://github.com/mozilla/treeherder-service/issues/112
-        option_collection: {
-          opt:    true
+
+  // Update the artifacts for this job.
+  var artifacts = createArtifactList(
+    this.queue, status.taskId, message.payload.runId
+  ).then(function(artifacts) {
+    return target.project.oauthRequest('POST', 'artifact/', [artifacts]);
+  }).then(function(res) {
+    if (res.error) {
+      console.error("Error submitting artifacts", res.text)
+      throw res.error;
+    }
+  });
+
+  // Update the status of the job.
+  return artifacts.then(function() {
+    return target.project.postJobs(status.runs.map(function(run) {
+      return {
+        project:            target.project.project,
+        revision_hash:      target.revisionHash,
+        job: {
+          job_guid:         createJobGuid(status.taskId, run.runId),
+          build_platform: {
+              platform:     status.workerType,
+              os_name:      '-',
+              architecture: '-'
+          },
+          machine_platform: {
+              platform:     status.workerType,
+              os_name:      '-',
+              architecture: '-'
+          },
+          name:             task.metadata.name,
+          reason:           'scheduled',  // use reasonCreated or reasonResolved
+          job_symbol:       task.extra.treeherder.symbol,
+          group_name:       task.extra.treeherder.groupName,
+          group_symbol:     task.extra.treeherder.groupSymbol,
+          product_name:     task.extra.treeherder.productName,
+          submit_timestamp: timestamp(run.scheduled),
+          start_timestamp:  (run.started ? timestamp(run.started) : undefined),
+          end_timestamp:    (run.resolved ? timestamp(run.resolved) : undefined),
+          state:            stateFromRun(run),
+          result:           resultFromRun(run),
+          who:              task.metadata.owner,
+          // You _must_ pass option collection until
+          // https://github.com/mozilla/treeherder-service/issues/112
+          option_collection: {
+            opt:    true
+          }
         }
-      }
-    };
-  }));
+      };
+    }));
+  });
 };
 
 /** Handle notifications of failed task */
@@ -414,7 +466,7 @@ Handlers.prototype.failed = function(message, task, target) {
       project:            target.project.project,
       revision_hash:      target.revisionHash,
       job: {
-        job_guid:         slugid.decode(status.taskId) + '/' + run.runId,
+        job_guid:         createJobGuid(status.taskId, run.runId),
         build_platform: {
             platform:     status.workerType,
             os_name:      '-',

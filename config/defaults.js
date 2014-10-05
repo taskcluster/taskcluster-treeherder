@@ -22,7 +22,11 @@ module.exports = {
   // Configuration of access to other taskcluster components
   taskcluster: {
     queueBaseUrl:                 undefined,
-    queueExchangePrefix:          undefined
+    queueExchangePrefix:          undefined,
+    credentials: {
+      accessToken:                process.env.TASKCLUSTER_ACCESS_TOKEN,
+      clientId:                   process.env.TASKCLUSTER_CLIENT_ID,
+    }
   },
 
   // AMQP connection string

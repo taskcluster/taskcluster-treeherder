@@ -1,31 +1,32 @@
 {
-  "name":     "taskcluster-treeherder",
-  "version":  "0.1.0",
-  "private":  true,
+  "name": "taskcluster-treeherder",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "test":   "tests/runtests.sh"
+    "test": "tests/runtests.sh"
   },
   "repository": {
-    "type":   "git",
-    "url":    "https://github.com/taskcluster/taskcluster-treeherder.git"
+    "type": "git",
+    "url": "https://github.com/taskcluster/taskcluster-treeherder.git"
   },
   "dependencies": {
-    "slugid":                           "1.0.2",
-    "mozilla-treeherder":               "0.4.2",
-    "promise":                          "6.0.0",
-    "lodash":                           "2.4.1",
-    "debug":                            "2.0.0",
-    "taskcluster-client":               "0.15.8",
-    "taskcluster-base":                 "0.5.5"
+    "co": "^3.1.0",
+    "debug": "2.0.0",
+    "lodash": "2.4.1",
+    "mozilla-treeherder": "0.4.2",
+    "promise": "6.0.0",
+    "slugid": "1.0.2",
+    "taskcluster-base": "0.5.5",
+    "taskcluster-client": "0.15.8"
   },
   "devDependencies": {
-    "superagent":                       "0.19.0",
-    "superagent-promise":               "0.2.0",
-    "mocha":                            "1.21.4",
-    "url-join":                         "0.0.1"
+    "superagent": "0.19.0",
+    "superagent-promise": "0.2.0",
+    "mocha": "1.21.4",
+    "url-join": "0.0.1"
   },
   "engines": {
-    "node":                             "0.10.x",
-    "npm":                              ">=1.1.2"
+    "node": "0.10.x",
+    "npm": ">=1.1.2"
   }
 }

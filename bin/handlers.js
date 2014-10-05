@@ -26,16 +26,22 @@ var launch = function(profile) {
     filename:     'taskcluster-treeherder'
   });
 
-  // Create InfluxDB connection for submitting statistics
-  var influx = new base.stats.Influx({
-    connectionString:   cfg.get('influx:connectionString'),
-    maxDelay:           cfg.get('influx:maxDelay'),
-    maxPendingPoints:   cfg.get('influx:maxPendingPoints')
-  });
+  // Configure stats drain
+  var statsDrain;
+  if (cfg.get('influx:connectionString')) {
+    statsDrain = new base.stats.Influx({
+      connectionString:   cfg.get('influx:connectionString'),
+      maxDelay:           cfg.get('influx:maxDelay'),
+      maxPendingPoints:   cfg.get('influx:maxPendingPoints')
+    });
+  } else {
+    console.log('influx:connectionString missing not reporting stats...');
+    statsDrain = new base.stats.NullDrain();
+  }
 
   // Start monitoring the process
   base.stats.startProcessUsageReporting({
-    drain:      influx,
+    drain:      statsDrain,
     component:  cfg.get('treeherder:statsComponent'),
     process:    'handlers'
   });
@@ -66,7 +72,7 @@ var launch = function(profile) {
     queueName:          cfg.get('treeherder:listenerQueueName'),
     routePrefix:        cfg.get('treeherder:routePrefix'),
     projects:           projects,
-    drain:              influx,
+    drain:              statsDrain,
     component:          cfg.get('treeherder:statsComponent')
   });
 
