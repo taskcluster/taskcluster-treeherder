@@ -196,18 +196,9 @@ var createJobGuid = function(taskId, runId) {
 
 /** Create artifact list */
 var createArtifactList = function(queue, taskId, runId) {
-  var inspectorLink = "http://docs.taskcluster.net/tools/task-inspector/#" +
-                      taskId + "/" + runId;
-  var details = [{
-    url:            inspectorLink,
-    value:          "Inspect Task",
-    content_type:   "link",
-    title:          "Inspect Task"
-  }];
-
   // list the artifacts and build the final structure for treeherder.
   return queue.listArtifacts(taskId, runId).then(function(list) {
-    list.artifacts.forEach(function(item) {
+    list = list.artifacts.map(function(item) {
       var url = queue.buildUrl(
         queue.getArtifact,
         taskId,
@@ -215,12 +206,12 @@ var createArtifactList = function(queue, taskId, runId) {
         item.name
       );
 
-      details.push({
+      return {
         url:          url,
         value:        item.name,
         content_type: 'link',
         title:        item.name
-      });
+      };
     });
 
     return {
@@ -228,7 +219,7 @@ var createArtifactList = function(queue, taskId, runId) {
       name: 'Job Info',
       job_guid: createJobGuid(taskId, runId),
       blob: JSON.stringify({
-        job_details: details
+        job_details: list
       })
     };
   });
@@ -417,7 +408,12 @@ Handlers.prototype.completed = function(message, task, target) {
   var artifacts = createArtifactList(
     this.queue, status.taskId, message.payload.runId
   ).then(function(artifacts) {
-    return target.project.oauthRequest('POST', 'artifact/', artifacts);
+    return target.project.oauthRequest('POST', 'artifact/', [artifacts]);
+  }).then(function(res) {
+    if (res.error) {
+      console.error("Error submitting artifacts", res.text)
+      throw res.error;
+    }
   });
 
   // Update the status of the job.
