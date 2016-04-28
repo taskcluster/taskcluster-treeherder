@@ -163,77 +163,71 @@ export class Handler {
     let taskId = message.status.taskId;
     let run = message.status.runs[runId];
     let treeherderConfig = task.extra.treeherder;
-    let job;
-
-    try {
-      job = {
-        owner: task.metadata.owner,
-        taskId: `${slugid.decode(taskId)}/${runId}`,
-        retryId: runId,
-        isRetried: false,
-        display: {
-          // jobSymbols could be an integer (i.e. Chunk ID) but need to be strings
-          // for treeherder
-          jobSymbol: String(treeherderConfig.symbol),
-          groupSymbol: treeherderConfig.groupSymbol || '?',
-          // Maximum job name length is 100 chars...
-          jobName: task.metadata.name.slice(0, 99),
-        },
-        state: stateFromRun(run),
-        result: resultFromRun(run),
-        tier: treeherderConfig.tier || 1,
-        timeScheduled: task.created,
-        // TODO: add coalesced info
-        jobKind: treeherderConfig.jobKind ? treeherderConfig.jobKind : 'other',
-        labels: treeherderConfig.labels ? treeherderConfig.labels : ['opt'],
-        reason: treeherderConfig.reason || "scheduled",
-        jobInfo: {
-          summary: task.metadata.description,
-          links: [
-            {
-              label: 'Inspect Task',
-              linkText: 'Inspect Task',
-              url: `https:\/\/tools.taskcluster.net/task-inspector/#${taskId}/${runId}`
-            }
-          ]
-        }
-      };
-
-      job.origin = {
-          kind: pushInfo.origin,
-          project: pushInfo.project,
-          revision: pushInfo.revision
-      };
-
-      if (pushInfo.origin === 'hg.mozilla.org') {
-        job.origin.pushLogID = pushInfo.pushId;
-      } else {
-        job.origin.pullRequestID = pushInfo.pushId;
-        job.origin.owner = pushInfo.owner;
+    let job = {
+      owner: task.metadata.owner,
+      taskId: `${slugid.decode(taskId)}/${runId}`,
+      retryId: runId,
+      isRetried: false,
+      display: {
+        // jobSymbols could be an integer (i.e. Chunk ID) but need to be strings
+        // for treeherder
+        jobSymbol: String(treeherderConfig.symbol),
+        groupSymbol: treeherderConfig.groupSymbol || '?',
+        // Maximum job name length is 100 chars...
+        jobName: task.metadata.name.slice(0, 99),
+      },
+      state: stateFromRun(run),
+      result: resultFromRun(run),
+      tier: treeherderConfig.tier || 1,
+      timeScheduled: task.created,
+      // TODO: add coalesced info
+      jobKind: treeherderConfig.jobKind ? treeherderConfig.jobKind : 'other',
+      labels: treeherderConfig.labels ? treeherderConfig.labels : ['opt'],
+      reason: treeherderConfig.reason || "scheduled",
+      jobInfo: {
+        summary: task.metadata.description,
+        links: [
+          {
+            label: 'Inspect Task',
+            linkText: 'Inspect Task',
+            url: `https:\/\/tools.taskcluster.net/task-inspector/#${taskId}/${runId}`
+          }
+        ]
       }
+    };
 
-      let machine = treeherderConfig.machine || {};
-      job.buildMachine = {
-          name: run.workerId || 'unknown',
-          platform: machine.platform || task.workerType,
-          os: machine.os || "-",
-          architecture: machine.architecture || "-"
-      }
+    job.origin = {
+        kind: pushInfo.origin,
+        project: pushInfo.project,
+        revision: pushInfo.revision
+    };
 
-      if (treeherderConfig.productName) {
-        job.productName = treeherderConfig.productName;
-      }
+    if (pushInfo.origin === 'hg.mozilla.org') {
+      job.origin.pushLogID = pushInfo.pushId;
+    } else {
+      job.origin.pullRequestID = pushInfo.pushId;
+      job.origin.owner = pushInfo.owner;
+    }
 
-      if (treeherderConfig.groupName) {
-        job.display.groupName = treeherderConfig.groupName;
-      }
+    let machine = treeherderConfig.machine || {};
+    job.buildMachine = {
+        name: run.workerId || 'unknown',
+        platform: machine.platform || task.workerType,
+        os: machine.os || "-",
+        architecture: machine.architecture || "-"
+    }
 
-      if (task.extra.chunks) {
-        job.display.chunkCount = task.extra.chunks.total;
-        job.display.chunkId = task.extra.chunks.current;
-      }
-    } catch(err) {
-      throw new Error(`Error constructing pulse message. ${err}, ${err.stack}`);
+    if (treeherderConfig.productName) {
+      job.productName = treeherderConfig.productName;
+    }
+
+    if (treeherderConfig.groupName) {
+      job.display.groupName = treeherderConfig.groupName;
+    }
+
+    if (task.extra.chunks) {
+      job.display.chunkCount = task.extra.chunks.total;
+      job.display.chunkId = task.extra.chunks.current;
     }
 
     return job;
