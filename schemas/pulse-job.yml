@@ -383,7 +383,7 @@ definitions:
         type: "string"
         pattern: "^[A-Za-z0-9_-]+$"
         minLength: 1
-        maxLength: 50
+        maxLength: 100
       os:
         type: "string"
         pattern: "^[A-Za-z0-9_-]+$"
