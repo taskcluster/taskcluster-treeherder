@@ -234,7 +234,7 @@ export class Handler {
   }
 
   async handleTaskPending(pushInfo, task, message) {
-    let job = this.buildMessage(pushInfo, task, message);
+    let job = this.buildMessage(pushInfo, task, message.runId, message);
     await this.publishJobMessage(pushInfo, job);
   }
 
