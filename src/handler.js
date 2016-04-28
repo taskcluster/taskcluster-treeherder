@@ -159,9 +159,12 @@ export class Handler {
   //
   // Specific handlers for each message type will add/remove information necessary
   // for the type of task event..
-  buildJobMessage(pushInfo, taskId, runId, task, run) {
+  buildMessage(pushInfo, task, runId, message) {
+    let taskId = message.status.taskId;
+    let run = message.status.runs[runId];
     let treeherderConfig = task.extra.treeherder;
     let job;
+
     try {
       job = {
         owner: task.metadata.owner,
@@ -237,21 +240,13 @@ export class Handler {
   }
 
   async handleTaskPending(pushInfo, task, message) {
-    let job = this.buildJobMessage(pushInfo,
-                             message.status.taskId,
-                             message.runId,
-                             task,
-                             message.status.runs[message.runId]);
+    let job = this.buildMessage(pushInfo, task, message);
     await this.publishJobMessage(pushInfo, job);
   }
 
   async handleTaskRerun(pushInfo, task, message) {
     let run = message.status.runs[message.runId-1];
-    let job = this.buildJobMessage(pushInfo,
-                             message.status.taskId,
-                             message.runId-1,
-                             task,
-                             run);
+    let job = this.buildMessage(pushInfo, task, message.runId-1, message);
     job.state = 'completed';
     job.result = 'fail';
     job.isRetried = true;
@@ -261,23 +256,15 @@ export class Handler {
 
   async handleTaskRunning(pushInfo, task, message) {
     let run = message.status.runs[message.runId];
-    let job = this.buildJobMessage(pushInfo,
-                             message.status.taskId,
-                             message.runId,
-                             task,
-                             run);
-    job.timeStarted = run.started;
+    let job = this.buildMessage(pushInfo, task, message.runId, message);
+    job.timeStarted = message.status.runs[message.runId].started;
     job.logs = [createLogReference(this.queue, message.status.taskId, run)];
     await this.publishJobMessage(pushInfo, job);
   }
 
   async handleTaskCompleted(pushInfo, task, message) {
     let run = message.status.runs[message.runId];
-    let job = this.buildJobMessage(pushInfo,
-                             message.status.taskId,
-                             message.runId,
-                             task,
-                             run);
+    let job = this.buildMessage(pushInfo, task, message.runId, message);
 
     job.timeStarted = run.started;
     job.timeCompleted = run.resolved;
@@ -301,11 +288,7 @@ export class Handler {
     }
 
     let run = message.status.runs[message.runId];
-    let job = this.buildJobMessage(pushInfo,
-                             message.status.taskId,
-                             message.runId,
-                             task,
-                             run);
+    let job = this.buildMessage(pushInfo, task, message.runId, message);
     job.timeStarted = run.started;
     job.timeCompleted = run.resolved;
     job.logs = [createLogReference(this.queue, message.status.taskId, run)];
@@ -320,11 +303,7 @@ export class Handler {
       return;
     }
 
-    let job = this.buildJobMessage(pushInfo,
-                             message.status.taskId,
-                             message.runId,
-                             task,
-                             run);
+    let job = this.buildMessage(pushInfo, task, message.runId, message);
     job.timeStarted = run.started;
     job.timeCompleted = run.resolved;
     job.logs = [createLogReference(this.queue, message.status.taskId, run)];

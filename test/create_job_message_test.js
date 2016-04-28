@@ -17,11 +17,7 @@ suite('build job message', () => {
   });
 
   test('valid message', async () => {
-    let job = await handler.buildJobMessage(pushInfo,
-                                      status.status.taskId,
-                                      status.runId,
-                                      task,
-                                      status.status.runs[status.runId]);
+    let job = await handler.buildMessage(pushInfo, task, status.runId, status);
     assert.deepEqual(job, expected);
   });
 
@@ -30,22 +26,14 @@ suite('build job message', () => {
     pushInfo = parseRoute(task.routes[0]);
     expected.origin.pushLogID = undefined;
 
-    let job = await handler.buildJobMessage(pushInfo,
-                                      status.status.taskId,
-                                      status.runId,
-                                      task,
-                                      status.status.runs[status.runId]);
+    let job = await handler.buildMessage(pushInfo, task, status.runId, status);
     assert.deepEqual(job, expected);
   });
 
   test('default opt label', async () => {
     delete task.extra.treeherder.labels;
 
-    let job = await handler.buildJobMessage(pushInfo,
-                                      status.status.taskId,
-                                      status.runId,
-                                      task,
-                                      status.status.runs[status.runId]);
+    let job = await handler.buildMessage(pushInfo, task, status.runId, status);
     assert.deepEqual(job, expected);
   });
 
@@ -53,22 +41,14 @@ suite('build job message', () => {
     task.extra.treeherder.labels = ['debug'];
     expected.labels = ['debug'];
 
-    let job = await handler.buildJobMessage(pushInfo,
-                                      status.status.taskId,
-                                      status.runId,
-                                      task,
-                                      status.status.runs[status.runId]);
+    let job = await handler.buildMessage(pushInfo, task, status.runId, status);
     assert.deepEqual(job, expected);
   });
 
   test('default tier', async () => {
     delete task.extra.treeherder.tier;
 
-    let job = await handler.buildJobMessage(pushInfo,
-                                      status.status.taskId,
-                                      status.runId,
-                                      task,
-                                      status.status.runs[status.runId]);
+    let job = await handler.buildMessage(pushInfo, task, status.runId, status);
     assert.deepEqual(job, expected);
   });
 
@@ -76,22 +56,14 @@ suite('build job message', () => {
     task.extra.treeherder.tier = 2;
     expected.tier = 2;
 
-    let job = await handler.buildJobMessage(pushInfo,
-                                      status.status.taskId,
-                                      status.runId,
-                                      task,
-                                      status.status.runs[status.runId]);
+    let job = await handler.buildMessage(pushInfo, task, status.runId, status);
     assert.deepEqual(job, expected);
   });
 
   test('rerun task', async () => {
     delete task.extra.treeherder.labels;
 
-    let job = await handler.buildJobMessage(pushInfo,
-                                      status.status.taskId,
-                                      status.runId,
-                                      task,
-                                      status.status.runs[status.runId]);
+    let job = await handler.buildMessage(pushInfo, task, status.runId, status);
     assert.deepEqual(job, expected);
   });
 
@@ -106,11 +78,7 @@ suite('build job message', () => {
       architecture: '-'
     }
 
-    let job = await handler.buildJobMessage(pushInfo,
-                                      status.status.taskId,
-                                      status.runId,
-                                      task,
-                                      status.status.runs[status.runId]);
+    let job = await handler.buildMessage(pushInfo, task, status.runId, status);
     assert.deepEqual(job, expected);
   });
 
@@ -123,11 +91,7 @@ suite('build job message', () => {
       architecture: '-'
     }
 
-    let job = await handler.buildJobMessage(pushInfo,
-                                      status.status.taskId,
-                                      status.runId,
-                                      task,
-                                      status.status.runs[status.runId]);
+    let job = await handler.buildMessage(pushInfo, task, status.runId, status);
     assert.deepEqual(job, expected);
   });
 });
