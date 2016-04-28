@@ -96,9 +96,11 @@ export class Handler extends events.EventEmitter {
   // Starts up the message handler and listens for messages
   async start() {
     this.listener.on('message', async (message) => {
-      await this.handleMessage(message).catch(err => {
+      try {
+        await this.handleMessage(message);
+      } catch(err) {
         console.log(`Error caught when processing message. ${err.message}. ${err.stack}`);
-      });
+      };
     });
     await this.listener.resume();
   }
