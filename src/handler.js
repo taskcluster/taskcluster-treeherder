@@ -41,11 +41,6 @@ function resultFromRun(run) {
   }
 }
 
-function taskIsRerun(runId, run) {
-  // TODO: add array includes plugin to tc-rules and use here instead of indexOf
-  return runId > 0 && ['rerun', 'retry'].indexOf(run.reasonCreated) !== -1;
-}
-
 // Creates a log entry for Treeherder to retrieve and parse.  This log is
 // displayed on the Treeherder Log Viewer once parsed.
 function createLogReference(queue, taskId, run) {
@@ -129,7 +124,7 @@ export class Handler {
         let run = message.payload.status.runs[message.payload.runId];
         // If the task run was created for an infrastructure rerun, then resolve
         // the previous run as retried.
-        if (taskIsRerun(runId, run)) {
+        if (runId > 0) {
           await this.handleTaskRerun(parsedRoute, task, message.payload);
         }
 
