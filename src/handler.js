@@ -1,10 +1,18 @@
 import assert from 'assert';
-import events from 'events';
 import slugid from 'slugid';
 import taskcluster from 'taskcluster-client';
 import parseRoute from './util/route_parser';
 
+let events = new taskcluster.QueueEvents();
+
 const TASK_TREEHERDER_SCHEMA = 'http://schemas.taskcluster.net/taskcluster-treeherder/v1/task-treeherder-config.json#';
+const EVENT_MAP = {
+  [events.taskPending().exchange]: 'pending',
+  [events.taskRunning().exchange]: 'running',
+  [events.taskCompleted().exchange]: 'completed',
+  [events.taskFailed().exchange]: 'failed',
+  [events.taskException().exchange]: 'exception'
+};
 
 function stateFromRun(run) {
   switch (run.state) {
@@ -81,10 +89,8 @@ function validateTask(validate, taskId, task, schema) {
     }
 }
 
-export class Handler extends events.EventEmitter {
+export class Handler {
   constructor(options) {
-    super();
-    this.queueEvents = options.queueEvents;
     this.queue = options.queue;
     this.scheduler = options.scheduler;
     this.listener = options.listener;
@@ -117,8 +123,8 @@ export class Handler extends events.EventEmitter {
     let task = await this.queue.task(taskId);
     validateTask(this.validator, taskId, task, TASK_TREEHERDER_SCHEMA);
 
-    switch (message.exchange) {
-      case this.queueEvents.taskPending().exchange:
+    switch (EVENT_MAP[message.exchange]) {
+      case 'pending':
         let runId = message.payload.runId;
         let run = message.payload.status.runs[message.payload.runId];
         // If the task run was created for an infrastructure rerun, then resolve
@@ -128,13 +134,13 @@ export class Handler extends events.EventEmitter {
         }
 
         return await this.handleTaskPending(parsedRoute, task, message.payload)
-      case this.queueEvents.taskRunning().exchange:
+      case 'running':
         return await this.handleTaskRunning(parsedRoute, task, message.payload)
-      case this.queueEvents.taskCompleted().exchange:
+      case 'completed':
         return await this.handleTaskCompleted(parsedRoute, task, message.payload)
-      case this.queueEvents.taskFailed().exchange:
+      case 'failed':
         return await this.handleTaskFailed(parsedRoute, task, message.payload)
-      case this.queueEvents.taskException().exchange:
+      case 'exception'.exchange:
         return await this.handleTaskException(parsedRoute, task, message.payload)
       default:
         throw new Error(`Unknown exchange: ${message.exchange}`);

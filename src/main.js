@@ -67,7 +67,6 @@ let load = base.loader({
 
       let handler = new Handler({
         queue,
-        queueEvents,
         scheduler,
         listener,
         prefix,
