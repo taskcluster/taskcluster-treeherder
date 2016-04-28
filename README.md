@@ -33,7 +33,7 @@ and is validated against a [published schema](https://schemas.taskcluster.net/ta
 ```js
 {
   routes: [
-    'treeherder.mozilla-inbound.8faa67ad6d0fda3ccf884c90acfd061d37e8558d'
+    'treeherder.mozilla-inbound.8faa67ad6d0fda3ccf884c90acfd061d37e8558d.1246'
   ],
   ...,
   metadata: {
