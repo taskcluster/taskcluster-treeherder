@@ -87,7 +87,7 @@ suite('build job message', () => {
     expected.buildMachine = {
       name: 'testworkerid',
       platform: 'b2g-emu-x86-kk',
-      os: '-',
+      os: 'test',
       architecture: '-'
     }
 
