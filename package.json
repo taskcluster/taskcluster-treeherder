@@ -1,6 +1,7 @@
 {
   "name": "taskcluster-treeherder",
   "version": "0.2.0",
+  "private": true,
   "scripts": {
     "compile": "babel-compile -p taskcluster src:lib test:.test",
     "test": "mocha $(find .test -name '*_test.js')",
