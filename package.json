@@ -15,7 +15,7 @@
   "dependencies": {
     "babel-compile": "^2.0.0",
     "babel-eslint": "^6.0.3",
-    "babel-preset-taskcluster": "^3.0.0",
+    "babel-preset-taskcluster": "^2.0.1",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-runtime": "^6.22.0",
     "eslint-config-taskcluster": "^2.0.0",
