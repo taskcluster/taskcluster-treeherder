@@ -113,9 +113,9 @@ export class Handler {
     this.listener.on('message', async (message) => {
       try {
         await this.monitor.timer('handle-message.time', this.handleMessage(message));
-        this.monitor.timer('handle-message.success');
+        this.monitor.count('handle-message.success');
       } catch(err) {
-        this.monitor.timer('handle-message.failure');
+        this.monitor.count('handle-message.failure');
         this.monitor.reportError(err);
       };
     });
