@@ -86,14 +86,21 @@ function parseRouteInfo(prefix, taskId, routes, task) {
 }
 
 
-function validateTask(validate, taskId, task, schema) {
+function validateTask(monitor, validate, taskId, task, schema) {
     if (!task.extra || !task.extra.treeherder) {
-      throw new Error(`Message is missing Treeherder job configuration. Task ID: ${taskId}`);
+      monitor.count('validateTask.no-config');
+      debug(`Message is missing Treeherder job configuration. Task ID: ${taskId}`);
+      return false;
     }
     let validationErrors = validate(task.extra.treeherder, schema);
     if (validationErrors) {
-      throw new Error(`Message contains an invalid Treeherder job configuration. Task ID: ${taskId} ${validationErrors}`);
+      monitor.count('validateTask.invalid-config');
+      debug(`Message contains an invalid Treeherder job configuration. Task ID: ${taskId} ${validationErrors}`);
+      return false;
     }
+
+    monitor.count('validateTask.good-config');
+    return true;
 }
 
 export class Handler {
@@ -140,7 +147,10 @@ export class Handler {
     debug(`message received for task ${taskId} with route ${message.routes}`);
     this.monitor.count(`${parsedRoute.project}.handle-message`);
 
-    validateTask(this.validator, taskId, task, TASK_TREEHERDER_SCHEMA);
+    // validation failures are common and logged, so do nothing more.
+    if (!validateTask(this.monitor, this.validator, taskId, task, TASK_TREEHERDER_SCHEMA)) {
+      return;
+    }
 
     switch (EVENT_MAP[message.exchange]) {
       case 'pending':
