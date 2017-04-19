@@ -206,7 +206,7 @@ export class Handler {
     let job = {
       buildSystem: 'taskcluster',
       owner: task.metadata.owner,
-      taskId: `${slugid.decode(taskId)}/${runId}`,
+      taskId: taskId,
       retryId: runId,
       isRetried: false,
       display: {
