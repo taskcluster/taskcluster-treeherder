@@ -39,6 +39,10 @@ function resultFromRun(run) {
         return 'canceled';
       }
 
+      if (run.reasonResolved === 'superseded') {
+        return 'coalesced';
+      }
+
       return 'exception';
     default:
       return 'unknown';
