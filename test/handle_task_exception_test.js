@@ -85,7 +85,7 @@ suite('handle exception job', () => {
     };
 
     expected.state = 'completed';
-    expected.result = 'coalesced';
+    expected.result = 'superseded';
     expected.timeStarted = started.toISOString();
     expected.timeCompleted = resolved.toISOString();
     expected.logs = [

@@ -40,7 +40,7 @@ function resultFromRun(run) {
       }
 
       if (run.reasonResolved === 'superseded') {
-        return 'coalesced';
+        return 'superseded';
       }
 
       return 'exception';
@@ -225,7 +225,6 @@ export class Handler {
       result: resultFromRun(run),
       tier: treeherderConfig.tier || 1,
       timeScheduled: task.created,
-      // TODO: add coalesced info
       jobKind: treeherderConfig.jobKind ? treeherderConfig.jobKind : 'other',
       reason: treeherderConfig.reason || "scheduled",
       jobInfo: {
