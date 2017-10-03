@@ -179,7 +179,7 @@ properties:
       - exception
       - canceled
       - unknown
-      - coalesced
+      - superseded
   jobKind:
     type: "string"
     default: "other"
