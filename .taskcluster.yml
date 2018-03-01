@@ -23,8 +23,8 @@ tasks:
           advice.detachedHead false && git checkout {{event.head.sha}} && npm
           install . && npm test
     metadata:
-      name: Run tests for taskcluster-treeherder in Taskcluster
-      description: create .taskcluster.yml file
+      name: taskcluster-treeherder tests
+      description: Run tests for taskcluster-treeherder in Taskcluster
       owner: '{{ event.head.user.email }}'
       source: '{{ event.head.repo.url }}'
-allowPullRequests: collaborators
+allowPullRequests: public
