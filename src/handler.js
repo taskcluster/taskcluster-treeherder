@@ -49,19 +49,6 @@ function resultFromRun(run) {
   }
 }
 
-// Creates a log entry for Treeherder to retrieve and parse.  This log is
-// displayed on the Treeherder Log Viewer once parsed.
-function createLogReference(queue, taskId, run) {
-  let logUrl = `https://queue.taskcluster.net/v1/task/${taskId}` +
-               `/runs/${run.runId}/artifacts/public/logs/live_backing.log`;
-
-  return {
-    // XXX: This is a magical name see 1147958 which enables the log viewer.
-    name: 'builds-4h',
-    url: logUrl,
-  };
-}
-
 // Filters the task routes for the treeherder specific route.  Once found,
 // the route is parsed into distinct parts used for constructing the
 // Treeherder job message.
@@ -225,6 +212,7 @@ module.exports = class Handler {
       timeScheduled: task.created,
       jobKind: treeherderConfig.jobKind ? treeherderConfig.jobKind : 'other',
       reason: treeherderConfig.reason || 'scheduled',
+      logs: [],
       jobInfo: {
         links: [],
         summary: task.metadata.description,
@@ -316,7 +304,6 @@ module.exports = class Handler {
 
     job.timeStarted = run.started;
     job.timeCompleted = run.resolved;
-    job.logs = [createLogReference(this.queue, message.status.taskId, run)];
     job = await addArtifactUploadedLinks(this.queue,
       this.monitor,
       message.status.taskId,
@@ -330,7 +317,6 @@ module.exports = class Handler {
     let job = this.buildMessage(pushInfo, task, message.runId, message);
     job.timeStarted = run.started;
     job.timeCompleted = run.resolved;
-    job.logs = [createLogReference(this.queue, message.status.taskId, run)];
     job = await addArtifactUploadedLinks(this.queue,
       this.monitor,
       message.status.taskId,
